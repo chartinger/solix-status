@@ -1,0 +1,33 @@
+{
+  "name": "didactic-spoon",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test dist/**/*.test.js",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/cli.js",
+    "dev": "tsx src/cli.ts",
+    "mqtt-cli": "tsx src/mqtt-cli.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chartinger/didactic-spoon.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/chartinger/didactic-spoon/issues"
+  },
+  "homepage": "https://github.com/chartinger/didactic-spoon#readme",
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "mqtt": "^5.15.1"
+  }
+}
