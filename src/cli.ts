@@ -1,20 +1,36 @@
 import "dotenv/config";
+import { pathToFileURL } from "node:url";
+import type { SiteDevice, SiteInfo } from "./client.js";
 import { AnkerSolixClient } from "./client.js";
 
-function parseArgs(argv: string[]): {
+export interface CliOptions {
   siteId?: string;
   deviceSn?: string;
+  list: boolean;
   watch: boolean;
   interval: number;
-} {
-  const result: { siteId?: string; deviceSn?: string; watch: boolean; interval: number } = {
+}
+
+export interface SiteDeviceListing {
+  siteId: string;
+  devices: Array<{
+    deviceSn: string;
+    productCode: string;
+  }>;
+}
+
+export function parseArgs(argv: string[]): CliOptions {
+  const result: CliOptions = {
+    list: false,
     watch: false,
     interval: 30,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const current = argv[i];
     const next = argv[i + 1];
-    if (current === "--watch") {
+    if (current === "--list") {
+      result.list = true;
+    } else if (current === "--watch") {
       result.watch = true;
     } else if (current === "--site-id" && next) {
       result.siteId = next;
@@ -33,6 +49,51 @@ function parseArgs(argv: string[]): {
   return result;
 }
 
+export function buildSiteDeviceListing(
+  sites: SiteInfo[],
+  devices: SiteDevice[],
+): SiteDeviceListing[] {
+  const devicesBySite = new Map<string, SiteDevice[]>();
+  for (const device of devices) {
+    const siteDevices = devicesBySite.get(device.siteId) ?? [];
+    siteDevices.push(device);
+    devicesBySite.set(device.siteId, siteDevices);
+  }
+
+  const listedSiteIds = new Set<string>();
+  const listing: SiteDeviceListing[] = [];
+  for (const site of sites) {
+    const siteId = site.site_id;
+    if (!siteId) {
+      continue;
+    }
+    listedSiteIds.add(siteId);
+    const siteDevices = devicesBySite.get(siteId) ?? [];
+    listing.push({
+      siteId,
+      devices: siteDevices.map((device) => ({
+        deviceSn: device.deviceSn,
+        productCode: device.productCode,
+      })),
+    });
+  }
+
+  for (const [siteId, siteDevices] of devicesBySite.entries()) {
+    if (listedSiteIds.has(siteId)) {
+      continue;
+    }
+    listing.push({
+      siteId,
+      devices: siteDevices.map((device) => ({
+        deviceSn: device.deviceSn,
+        productCode: device.productCode,
+      })),
+    });
+  }
+
+  return listing;
+}
+
 async function main(): Promise<void> {
   const email = process.env.ANKER_EMAIL;
   const password = process.env.ANKER_PASSWORD;
@@ -42,8 +103,15 @@ async function main(): Promise<void> {
     throw new Error("Set ANKER_EMAIL and ANKER_PASSWORD environment variables.");
   }
 
-  const { siteId, deviceSn, watch, interval } = parseArgs(process.argv.slice(2));
+  const { siteId, deviceSn, list, watch, interval } = parseArgs(process.argv.slice(2));
   const client = new AnkerSolixClient({ email, password, countryId });
+
+  if (list) {
+    const [sites, devices] = await Promise.all([client.getSiteList(), client.getSiteDevices()]);
+    const listing = buildSiteDeviceListing(sites, devices);
+    process.stdout.write(`${JSON.stringify({ sites: listing }, null, 2)}\n`);
+    return;
+  }
 
   const printStatus = async (): Promise<void> => {
     const status = await client.getCurrentStatus(siteId, deviceSn);
@@ -62,8 +130,13 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  process.stderr.write(`${message}\n`);
-  process.exitCode = 1;
-});
+const isDirectRun =
+  typeof process.argv[1] === "string" && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isDirectRun) {
+  main().catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`${message}\n`);
+    process.exitCode = 1;
+  });
+}

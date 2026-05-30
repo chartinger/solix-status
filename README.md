@@ -27,8 +27,16 @@ Then run:
 npm run start -- --site-id <SITE_ID> --device-sn <DEVICE_SN>
 ```
 
+To list all sites and discovered Solarbank devices:
+
+```bash
+npm run start -- --list
+```
+
 Both `--site-id` and `--device-sn` are optional.  
 If omitted, the first available site and first Solarbank device are used.
+
+`--list` prints all sites and their devices, then exits.
 
 ## Output example
 
