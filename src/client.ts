@@ -1,4 +1,4 @@
-import { createCipheriv, createECDH, createHash } from "node:crypto";
+import { createCryptoMaterial, encryptPassword, md5Hex, type CryptoMaterial } from "./crypto.js";
 
 const API_SERVERS = {
   eu: "https://ankerpower-api-eu.anker.com",
@@ -41,9 +41,6 @@ const ENDPOINTS = {
   mqttInfo: "app/devicemanage/get_user_mqtt_info",
 } as const;
 
-const API_PUBLIC_KEY_HEX =
-  "04c5c00c4f8d1197cc7c3167c52bf7acb054d722f0ef08dcd7e0883236e0d72a3868d9750cb47fa4619248f3d83f0f662671dadc6e2d31c2f41db0161651c7c076";
-
 type JsonObject = Record<string, unknown>;
 
 export interface AnkerClientOptions {
@@ -84,8 +81,7 @@ export class AnkerSolixClient {
   private readonly password: string;
   private readonly countryId: string;
   private readonly apiBase: string;
-  private readonly ecdh = createECDH("prime256v1");
-  private readonly sharedKey: Buffer;
+  private readonly cryptoMaterialPromise: Promise<CryptoMaterial>;
 
   private token: string | null = null;
   private gtoken: string | null = null;
@@ -97,8 +93,7 @@ export class AnkerSolixClient {
     this.apiBase = COM_COUNTRIES.has(this.countryId)
       ? API_SERVERS.com
       : API_SERVERS.eu;
-    this.ecdh.generateKeys();
-    this.sharedKey = this.ecdh.computeSecret(Buffer.from(API_PUBLIC_KEY_HEX, "hex"));
+    this.cryptoMaterialPromise = createCryptoMaterial();
   }
 
   public async getCurrentStatus(siteId?: string, deviceSn?: string): Promise<DeviceStatus> {
@@ -204,13 +199,14 @@ export class AnkerSolixClient {
   }
 
   private async authenticate(): Promise<void> {
+    const cryptoMaterial = await this.cryptoMaterialPromise;
     const now = new Date();
     const loginBody = {
       ab: this.countryId,
-      client_secret_info: { public_key: this.ecdh.getPublicKey("hex", "uncompressed") },
+      client_secret_info: { public_key: cryptoMaterial.publicKeyHex },
       enc: 0,
       email: this.email,
-      password: this.encryptPassword(this.password),
+      password: await encryptPassword(this.password, cryptoMaterial.sharedKey),
       time_zone: -now.getTimezoneOffset() * 60 * 1000,
       transaction: String(Date.now()),
     };
@@ -228,7 +224,7 @@ export class AnkerSolixClient {
     const data = (json.data ?? {}) as JsonObject;
     const userId = String(data.user_id ?? "");
     this.token = String(data.auth_token ?? "");
-    this.gtoken = userId ? createHash("md5").update(userId).digest("hex") : null;
+    this.gtoken = userId ? md5Hex(userId) : null;
 
     if (!this.token || !this.gtoken) {
       throw new Error("Login succeeded but token data is missing.");
@@ -249,14 +245,6 @@ export class AnkerSolixClient {
       headers.gtoken = this.gtoken;
     }
     return headers;
-  }
-
-  private encryptPassword(password: string): string {
-    const iv = this.sharedKey.subarray(0, 16);
-    const cipher = createCipheriv("aes-256-cbc", this.sharedKey, iv);
-    return Buffer.concat([cipher.update(password, "utf8"), cipher.final()]).toString(
-      "base64",
-    );
   }
 
   private async parseJsonResponse(response: Response, endpoint: string): Promise<JsonObject> {
