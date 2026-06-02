@@ -54,6 +54,10 @@ export interface DeviceStatus {
   deviceSn: string;
   batteryPercent: number | null;
   panelInputWatts: number | null;
+  pvInput1Watts: number | null;
+  pvInput2Watts: number | null;
+  pvInput3Watts: number | null;
+  pvInput4Watts: number | null;
   outputWatts: number | null;
 }
 
@@ -337,6 +341,10 @@ export function extractStatusFromScene(
     firstNumber(device.photovoltaic_power, device.input_power, solarbankInfo.total_photovoltaic_power),
     powerUnit,
   );
+  const pvInput1 = toWatts(toNumber(solarbankInfo.solar_power_1), powerUnit);
+  const pvInput2 = toWatts(toNumber(solarbankInfo.solar_power_2), powerUnit);
+  const pvInput3 = toWatts(toNumber(solarbankInfo.solar_power_3), powerUnit);
+  const pvInput4 = toWatts(toNumber(solarbankInfo.solar_power_4), powerUnit);
   const output = toWatts(
     firstNumber(device.output_power, solarbankInfo.total_output_power),
     powerUnit,
@@ -347,6 +355,10 @@ export function extractStatusFromScene(
     deviceSn: String(device.device_sn ?? ""),
     batteryPercent,
     panelInputWatts: panelInput,
+    pvInput1Watts: pvInput1,
+    pvInput2Watts: pvInput2,
+    pvInput3Watts: pvInput3,
+    pvInput4Watts: pvInput4,
     outputWatts: output,
   };
 }

@@ -27,6 +27,10 @@ test("extractStatusFromScene returns watt values and battery percentage", () => 
     deviceSn: "device-123",
     batteryPercent: 75,
     panelInputWatts: 640,
+    pvInput1Watts: null,
+    pvInput2Watts: null,
+    pvInput3Watts: null,
+    pvInput4Watts: null,
     outputWatts: 300,
   });
 });
