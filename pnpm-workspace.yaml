@@ -1,0 +1,14 @@
+packages:
+  - 'packages/*'
+
+allowBuilds:
+  esbuild: set this to true or false
+
+catalog:
+  '@arethetypeswrong/core': ^0.18.3
+  "@types/node": "^25.9.1"
+  publint: ^0.3.21
+  tsdown: ^0.22.1
+  "tsx": "^4.22.3"
+  "typescript": "^6.0.3"
+  "vitest": "^4.1.8"
