@@ -1,7 +1,4 @@
 import "dotenv/config";
-import { writeFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { connect } from "mqtt";
 import { AnkerSolixClient } from "@lab759/solix-api";
 import { parseMessage } from "./mqtt-packet.js";
@@ -27,21 +24,6 @@ async function main(): Promise<void> {
   if (devices.length === 0) {
     throw new Error("No devices found for this account.");
   }
-
-  // Write PEM files to a temp directory.
-  const tmpDir = tmpdir();
-  const caPath = join(tmpDir, "anker-ca.pem");
-  const certPath = join(tmpDir, "anker-client.pem");
-  const keyPath = join(tmpDir, "anker-client.key");
-  writeFileSync(caPath, mqttInfo.caCert);
-  writeFileSync(certPath, mqttInfo.clientCert);
-  writeFileSync(keyPath, mqttInfo.clientKey);
-
-  const cleanup = (): void => {
-    for (const path of [caPath, certPath, keyPath]) {
-      try { rmSync(path); } catch { /* ignore */ }
-    }
-  };
 
   const brokerUrl = `mqtts://${mqttInfo.brokerHost}:${mqttInfo.brokerPort}`;
   process.stderr.write(`Connecting to ${brokerUrl}…\n`);
@@ -119,14 +101,10 @@ async function main(): Promise<void> {
 
   mqttClient.on("close", () => {
     process.stderr.write("Connection closed.\n");
-    cleanup();
   });
 
   const exit = (code: number): void => {
-    mqttClient.end(true, () => {
-      cleanup();
-      process.exit(code);
-    });
+    mqttClient.end(true, () => process.exit(code));
   };
 
   process.on("SIGINT", () => exit(0));
