@@ -5,8 +5,43 @@ import type { FieldMap } from "./mqtt-packet.js";
 import { parseEnvelope, parseHeader, parseMessage } from "./mqtt-packet.js";
 import { getFieldMap } from "./mqttmap.js";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Typed event payloads emitted by AnkerSolixMqttClient
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Payload for the `"message"` event — a fully parsed Anker Solix device message. */
+export interface MqttMessageEvent {
+  /** The MQTT topic the message arrived on. */
+  topic: string;
+  /** Device product number / model identifier (e.g. "A17C1"). */
+  pn: string;
+  /** Device serial number. */
+  sn: string;
+  /** 2-byte message type as lowercase hex (e.g. "0405"). */
+  msgType?: string;
+  /** Whether the XOR checksum verified correctly. */
+  checksumOk?: boolean;
+  /** Semantically decoded key-value pairs (requires a field map for the device). */
+  decoded?: Record<string, unknown>;
+  /** Raw binary fields (only included when `raw: true` option is set). */
+  rawFields?: Record<string, { id: string; type: string; hex: string }>;
+  /** Parsed JSON payload for X1/HES devices (non-binary protocol). */
+  jsonData?: unknown;
+  /** Outer envelope header metadata. */
+  head?: Record<string, unknown>;
+}
+
+/** Payload for the `"raw"` event — an unparseable / non-envelope MQTT message. */
+export interface MqttRawEvent {
+  /** The MQTT topic the message arrived on. */
+  topic: string;
+  /** The raw payload (parsed JSON or base64 string). */
+  payload: string;
+}
+
 type Events = {
-  [key: string]: any;
+  message: [MqttMessageEvent];
+  raw: [MqttRawEvent];
 };
 
 export type AnkerSolixMqttClientOptions = {
@@ -69,10 +104,9 @@ export class AnkerSolixMqttClient extends EventEmitter<Events> {
 
     mqttClient.on("message", (topic: string, payload: Buffer) => {
       // Try to parse the Anker Solix binary envelope.
-      let line: string;
       try {
         // Step 1: parse the outer envelope to extract pn and binary data
-        const { head, pn, binaryData } = parseEnvelope(payload);
+        const { pn, binaryData } = parseEnvelope(payload);
 
         // Step 2: parse the binary packet header to get the actual msgType,
         // then look up the correct field map for this device + message type.
@@ -103,7 +137,7 @@ export class AnkerSolixMqttClient extends EventEmitter<Events> {
           }
         }
 
-        line = JSON.stringify({
+        const msgEvent: MqttMessageEvent = {
           topic,
           pn: result.pn,
           sn: result.sn,
@@ -113,26 +147,30 @@ export class AnkerSolixMqttClient extends EventEmitter<Events> {
           rawFields,
           jsonData: result.jsonData ?? undefined,
           head: result.head,
-        });
+        };
+
+        this.emit("message", msgEvent);
       } catch {
         // Fall back to raw output for non-envelope messages.
-        let parsed: unknown;
+        let parsed: string;
         try {
           parsed = JSON.parse(payload.toString("utf8"));
         } catch {
           parsed = payload.toString("base64");
         }
-        line = JSON.stringify({ topic, payload: parsed });
+        const rawEvent: MqttRawEvent = { topic, payload: parsed };
+        this.emit("raw", rawEvent);
       }
-      process.stdout.write(`${line}\n`);
     });
 
     mqttClient.on("error", (err: Error) => {
       process.stderr.write(`MQTT error: ${err.message}\n`);
+      this.mqttClient = null;
     });
 
     mqttClient.on("close", () => {
       process.stderr.write("Connection closed.\n");
+      this.mqttClient = null;
     });
   }
 
