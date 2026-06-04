@@ -1,7 +1,7 @@
 {
   "name": "@lab759/solix-api",
   "version": "0.0.1",
-  "description": "",
+  "description": "Unofficial Anker Solix REST API client for TypeScript",
   "private": true,
   "types": "./dist/index.d.cts",
   "scripts": {

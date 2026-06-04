@@ -1,7 +1,7 @@
 {
   "name": "@lab759/solix-mqtt",
   "version": "0.0.1",
-  "description": "",
+  "description": "Unofficial Anker Solix MQTT real-time data client for TypeScript",
   "private": true,
   "types": "./dist/index.d.cts",
   "scripts": {

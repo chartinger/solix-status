@@ -10,6 +10,8 @@ This package is based on the [anker-solix-api](https://github.com/thomluther/ank
 npm install @lab759/solix-api
 ```
 
+> **Note:** In the monorepo the package is referenced via `pnpm` workspaces (`"@lab759/solix-api": "workspace:*"`).
+
 ## Usage
 
 ```ts
@@ -64,6 +66,20 @@ console.log(mqttInfo);
 ### Methods
 
 - **`getCurrentStatus(siteId?, deviceSn?)`** — Returns the current battery/panel/output status. Omitting both arguments uses the first available site and device.
+  ```ts
+  // Returns:
+  {
+    siteId: string;
+    deviceSn: string;
+    batteryPercent: number | null;
+    panelInputWatts: number | null;
+    pvInput1Watts: number | null;
+    pvInput2Watts: number | null;
+    pvInput3Watts: number | null;
+    pvInput4Watts: number | null;
+    outputWatts: number | null;
+  }
+  ```
 - **`getSiteList()`** — Returns all sites linked to the account.
 - **`getSceneInfo(siteId)`** — Returns raw scene/scenario data for a site.
 - **`getSiteDevices()`** — Returns a flat list of all Solarbank devices across all sites.
