@@ -29,6 +29,9 @@ importers:
       '@lab759/solix-api':
         specifier: 'workspace:'
         version: link:packages/solix-api
+      '@lab759/solix-mqtt':
+        specifier: 'workspace:'
+        version: link:packages/solix-mqtt
       dotenv:
         specifier: ^17.2.3
         version: 17.4.2
