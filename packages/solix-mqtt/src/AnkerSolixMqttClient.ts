@@ -165,12 +165,10 @@ export class AnkerSolixMqttClient extends EventEmitter<Events> {
 
     mqttClient.on("error", (err: Error) => {
       process.stderr.write(`MQTT error: ${err.message}\n`);
-      this.mqttClient = null;
     });
 
     mqttClient.on("close", () => {
       process.stderr.write("Connection closed.\n");
-      this.mqttClient = null;
     });
   }
 
