@@ -1,7 +1,6 @@
 import "dotenv/config";
 import { pathToFileURL } from "node:url";
-import type { SiteDevice, SiteInfo } from "./client.js";
-import { AnkerSolixClient } from "./client.js";
+import { AnkerSolixClient, type SiteDevice, type SiteInfo } from "@lab759/solix-api";
 
 export interface CliOptions {
   siteId?: string;

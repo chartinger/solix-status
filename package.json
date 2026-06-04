@@ -5,12 +5,10 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "test": "node --test dist/**/*.test.js",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/cli.js",
-    "start:mqtt": "node dist/mqtt-cli.js",
-    "dev": "tsx src/cli.ts",
-    "mqtt-cli": "tsx src/mqtt-cli.ts"
+    "test": "pnpm -r test",
+    "build": "pnpm -r build",
+    "api": "tsx src/cli.ts",
+    "mqtt": "tsx src/mqtt-cli.ts"
   },
   "repository": {
     "type": "git",
@@ -27,9 +25,12 @@
   "devDependencies": {
     "@types/node": "^25.9.1",
     "tsx": "^4.22.3",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
   },
   "dependencies": {
+    "@lab759/solix-api": "workspace:",
+    "@lab759/solix-mqtt": "workspace:",
     "dotenv": "^17.2.3",
     "mqtt": "^5.15.1"
   }

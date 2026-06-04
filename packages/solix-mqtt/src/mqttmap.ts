@@ -390,6 +390,45 @@ const A17C5_0405: FieldMap = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Solarbank 3 (A17C5) — 0408 state_info
+// ─────────────────────────────────────────────────────────────────────────────
+// Decoded from raw hex dump of an A17C5 0408 packet.
+// Fields ab–b9 use the same IDs as A17C5_0405 (same semantics).
+// Fields ce–d2 are type 0x04 (24-byte bin/bitmask), NOT individual power values.
+// TODO: verify field meanings with live data when solar is active.
+
+const A17C5_0408: FieldMap = {
+  topic: { topic: "state_info" },
+  a2: { name: "device_sn" },
+  a3: { name: "local_timestamp" },
+  a4: { name: "utc_timestamp" },
+  a5: { name: "status_code" },
+  a6: { name: "battery_raw_value" },
+  a7: { name: "battery_soc" },
+  a8: { name: "charging_status" },
+  a9: { name: "temp_unit_fahrenheit" },
+  ab: { name: "photovoltaic_power" },
+  ac: { name: "battery_power_signed" },
+  ad: { name: "output_power" },
+  ae: { name: "ac_output_power_signed" },
+  b0: { name: "pv_yield" },
+  b1: { name: "charged_energy" },
+  b2: { name: "discharged_energy" },
+  b3: { name: "output_energy" },
+  b4: { name: "consumed_energy" },
+  b5: { name: "min_soc" },
+  b7: { name: "usage_mode" },
+  b8: { name: "home_load_preset" },
+  c7: { name: "pv_input_1_power" },
+  c8: { name: "pv_input_2_power" },
+  c9: { name: "pv_input_3_power" },
+  ca: { name: "pv_input_4_power" },
+  dd: { name: "grid_import_energy_total" },
+  de: { name: "grid_export_energy_total" },
+  fe: TIMESTAMP_FE,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Network / WiFi message (shared across PPS and Solarbank)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -403,6 +442,11 @@ const COMMON_0407: FieldMap = {
 const A17C1_0407: FieldMap = {
   ...COMMON_0407,
   a5: { name: "charging_status" },
+};
+
+const A17C5_0407: FieldMap = {
+  ...COMMON_0407,
+  a1: { name: "unknown_a1" },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -460,6 +504,8 @@ export const SOLIXMQTTMAP: Record<string, Record<string, FieldMap>> = {
   // Solarbank 3
   A17C5: {
     "0405": A17C5_0405,
+    "0407": A17C5_0407,
+    "0408": A17C5_0408,
   },
 };
 

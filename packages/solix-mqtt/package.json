@@ -1,0 +1,50 @@
+{
+  "name": "@lab759/solix-mqtt",
+  "version": "0.0.1",
+  "description": "",
+  "private": true,
+  "types": "./dist/index.d.cts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "tsdown",
+    "build:watch": "tsdown --watch"
+  },
+  "sideEffects": false,
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "@arethetypeswrong/core": "catalog:",
+    "publint": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@lab759/solix-api": "workspace:",
+    "mqtt": "^5.15.1"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": "./dist/index.mjs",
+        "require": "./dist/index.cjs"
+      },
+      "./package.json": "./package.json"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "engines": {
+    "node": ">=20"
+  }
+}
