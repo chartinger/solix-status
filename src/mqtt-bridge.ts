@@ -35,7 +35,7 @@ async function main(): Promise<void> {
         pvInput2Watts: Number(data.decoded?.pv_input_2_power),
         pvInput3Watts: Number(data.decoded?.pv_input_3_power),
         pvInput4Watts: Number(data.decoded?.pv_input_4_power),
-        outputWatts: Number(data.decoded?.output_energy), // Needs verification
+        outputWatts: Number(data.decoded?.charged_energy), // Needs verification
       };
       console.dir(deviceStatus, { depth: null });
       targetMqttClient.publish(TARGET_TOPIC, JSON.stringify(deviceStatus));
