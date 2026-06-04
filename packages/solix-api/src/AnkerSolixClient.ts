@@ -47,6 +47,8 @@ export interface AnkerClientOptions {
   email: string;
   password: string;
   countryId: string;
+  token?: string | null;
+  gtoken?: string | null
 }
 
 export interface DeviceStatus {
@@ -99,6 +101,8 @@ export class AnkerSolixClient {
       ? API_SERVERS.com
       : API_SERVERS.eu;
     this.cryptoMaterialPromise = createCryptoMaterial();
+    this.token = options.token ?? null;
+    this.gtoken = options.gtoken ?? null;
   }
 
   public async getCurrentStatus(siteId?: string, deviceSn?: string): Promise<DeviceStatus> {
@@ -179,6 +183,10 @@ export class AnkerSolixClient {
     return { brokerHost, brokerPort, clientId, caCert, clientCert, clientKey };
   }
 
+  public getSessionTokens(): { token: string | null; gtoken: string | null } {
+    return { token: this.token, gtoken: this.gtoken };
+  }
+
   private async request<T extends JsonObject>(
     endpoint: string,
     body: JsonObject,
@@ -231,6 +239,7 @@ export class AnkerSolixClient {
   }
 
   private clearSession(): void {
+    console.warn("Authentication failed, clearing session and retrying...");
     this.token = null;
     this.gtoken = null;
   }
@@ -253,6 +262,10 @@ export class AnkerSolixClient {
   }
 
   private async authenticate(): Promise<void> {
+    if (this.token && this.gtoken) {
+      console.log("Already authenticated, skipping login.");
+      return;
+    }
     const cryptoMaterial = await this.cryptoMaterialPromise;
     const now = new Date();
     const loginBody = {
@@ -279,6 +292,8 @@ export class AnkerSolixClient {
     const userId = String(data.user_id ?? "");
     this.token = String(data.auth_token ?? "");
     this.gtoken = userId ? md5Hex(userId) : null;
+
+    console.log({ token: this.token, gtoken: this.gtoken });
 
     if (!this.token || !this.gtoken) {
       throw new Error("Login succeeded but token data is missing.");

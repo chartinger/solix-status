@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { pathToFileURL } from "node:url";
-import { AnkerSolixClient, type SiteDevice, type SiteInfo } from "@lab759/solix-api";
+import { AnkerSolixClient, type AnkerClientOptions, type SiteDevice, type SiteInfo } from "@lab759/solix-api";
+import { loadAuthInfo } from "./auth.js";
 
 export interface CliOptions {
   siteId?: string;
@@ -94,16 +95,10 @@ export function buildSiteDeviceListing(
 }
 
 async function main(): Promise<void> {
-  const email = process.env.ANKER_EMAIL;
-  const password = process.env.ANKER_PASSWORD;
-  const countryId = process.env.ANKER_COUNTRY_ID ?? "DE";
-
-  if (!email || !password) {
-    throw new Error("Set ANKER_EMAIL and ANKER_PASSWORD environment variables.");
-  }
+  const apiClientOptions: AnkerClientOptions = loadAuthInfo();
 
   const { siteId, deviceSn, list, watch, interval } = parseArgs(process.argv.slice(2));
-  const client = new AnkerSolixClient({ email, password, countryId });
+  const client = new AnkerSolixClient(apiClientOptions);
 
   if (list) {
     const [sites, devices] = await Promise.all([client.getSiteList(), client.getSiteDevices()]);

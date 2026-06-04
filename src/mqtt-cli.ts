@@ -1,19 +1,15 @@
-import { AnkerSolixClient, type DeviceStatus } from "@lab759/solix-api";
+import { AnkerSolixClient, type AnkerClientOptions, type DeviceStatus } from "@lab759/solix-api";
 import { AnkerSolixMqttClient } from "@lab759/solix-mqtt";
 import "dotenv/config";
+import { loadAuthInfo } from "./auth.js";
 
 async function main(): Promise<void> {
   const showRaw = process.argv.includes("--raw");
 
-  const email = process.env.ANKER_EMAIL;
-  const password = process.env.ANKER_PASSWORD;
-  const countryId = process.env.ANKER_COUNTRY_ID ?? "DE";
+  const apiClientOptions: AnkerClientOptions = loadAuthInfo();
 
-  if (!email || !password) {
-    throw new Error("Set ANKER_EMAIL and ANKER_PASSWORD environment variables.");
-  }
 
-  const client = new AnkerSolixClient({ email, password, countryId });
+  const client = new AnkerSolixClient(apiClientOptions);
   const mqttClient = new AnkerSolixMqttClient(client, { raw: showRaw });
 
   mqttClient.on("message", (data) => {
@@ -31,7 +27,7 @@ async function main(): Promise<void> {
         pvInput2Watts: Number(data.decoded?.pv_input_2_power),
         pvInput3Watts: Number(data.decoded?.pv_input_3_power),
         pvInput4Watts: Number(data.decoded?.pv_input_4_power),
-        outputWatts: Number(data.decoded?.output_energy), // Needs verification
+        outputWatts: Number(data.decoded?.charged_energy), // Needs verification
       };
       console.dir(deviceStatus, { depth: null });
     }
