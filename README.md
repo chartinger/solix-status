@@ -10,6 +10,7 @@ This is a **pnpm monorepo** containing the reusable library packages and CLI too
 |---------|-------------|
 | [`@lab759/solix-api`](./packages/solix-api) | Cloud REST API client — login, status queries, site/device discovery, MQTT credential retrieval |
 | [`@lab759/solix-mqtt`](./packages/solix-mqtt) | MQTT client for real-time binary protocol data from Anker Solix devices |
+| [`@lab759/solix-status`](./packages/solix-status) | CLI tools — REST polling, MQTT streaming, and MQTT-to-MQTT bridge |
 
 ## Setup
 
@@ -18,7 +19,7 @@ pnpm install
 pnpm build
 ```
 
-Create a `.env` file in the project root:
+Create a `.env` file in [`packages/solix-status`](./packages/solix-status):
 
 ```dotenv
 ANKER_EMAIL=you@example.com
@@ -29,6 +30,8 @@ ANKER_COUNTRY_ID=DE
 `ANKER_COUNTRY_ID` is optional (defaults to `DE`).
 
 ## CLI Usage
+
+The CLI scripts live in the [`@lab759/solix-status`](./packages/solix-status) package and are exposed as `pnpm` scripts from the monorepo root.
 
 ### Poll REST API
 
@@ -64,6 +67,19 @@ pnpm mqtt [--raw]
 ```
 
 Connects to the Anker Solix MQTT broker, subscribes to all discovered devices, and prints parsed binary messages as they arrive. Add `--raw` to include raw hex field dumps (useful for reverse engineering).
+
+### MQTT-to-MQTT bridge
+
+```bash
+pnpm bridge [--raw]
+```
+
+Same as the MQTT stream, but also publishes parsed device status to a **second MQTT broker** (e.g. a local Home Assistant MQTT instance). Requires these additional environment variables:
+
+| Variable | Description |
+|----------|-------------|
+| `TARGET_BROKER` | Host of the target MQTT broker (e.g. `localhost:1883`) |
+| `TARGET_TOPIC` | MQTT topic to publish status updates to |
 
 ## Output example (REST API)
 
