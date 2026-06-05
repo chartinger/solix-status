@@ -4,7 +4,6 @@ export default defineConfig({
     name: "@lab759/solix-api",
     entry: ['./src/index.ts'],
     exports: {
-        devExports: true,
         enabled: true,
     },
     publint: true,

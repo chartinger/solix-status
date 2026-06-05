@@ -3,6 +3,7 @@
   "compilerOptions": {
     // File Layout
     "outDir": "dist",
+    "rootDir": "src",
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "nodenext",
@@ -39,4 +40,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
   },
+  "include": [
+    "src"
+  ],
 }

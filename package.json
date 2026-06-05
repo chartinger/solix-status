@@ -1,38 +1,32 @@
 {
-  "name": "didactic-spoon",
+  "name": "@lab759/solix-monorepo",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/cli.cjs",
   "private": true,
   "scripts": {
     "test": "pnpm -r test",
     "build": "pnpm -r build",
-    "api": "tsx src/cli.ts",
-    "mqtt": "tsx src/mqtt-cli.ts",
-    "bridge": "tsx src/mqtt-bridge.ts"
+    "api": "pnpm --filter @lab759/solix-status api",
+    "mqtt": "pnpm --filter @lab759/solix-status mqtt",
+    "bridge": "pnpm --filter @lab759/solix-status bridge"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/chartinger/didactic-spoon.git"
+    "url": "git+https://github.com/chartinger/solix-status.git"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "type": "module",
   "bugs": {
-    "url": "https://github.com/chartinger/didactic-spoon/issues"
+    "url": "https://github.com/chartinger/solix-status/issues"
   },
-  "homepage": "https://github.com/chartinger/didactic-spoon#readme",
-  "devDependencies": {
-    "@types/node": "^25.9.1",
-    "tsx": "^4.22.3",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.8"
+  "homepage": "https://github.com/chartinger/solix-status#readme",
+  "devDependencies": {},
+  "dependencies": {},
+  "engines": {
+    "node": ">=20"
   },
-  "dependencies": {
-    "@lab759/solix-api": "workspace:",
-    "@lab759/solix-mqtt": "workspace:",
-    "dotenv": "^17.2.3",
-    "mqtt": "^5.15.1"
-  }
+  "sideEffects": false
 }

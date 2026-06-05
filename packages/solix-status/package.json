@@ -1,0 +1,56 @@
+{
+  "name": "@lab759/solix-status",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "build": "tsdown",
+    "api": "tsx src/cli.ts",
+    "mqtt": "tsx src/mqtt-cli.ts",
+    "bridge": "tsx src/mqtt-bridge.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chartinger/solix-status.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/chartinger/solix-status/issues"
+  },
+  "homepage": "https://github.com/chartinger/solix-status#readme",
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8",
+    "@lab759/solix-api": "workspace:",
+    "@lab759/solix-mqtt": "workspace:"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "mqtt": "^5.15.1",
+    "tsdown": "catalog:"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./cli": "./src/cli.ts",
+    "./mqtt-cli": "./src/mqtt-cli.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.mjs",
+      "./cli": "./dist/cli.mjs",
+      "./mqtt-cli": "./dist/mqtt-cli.mjs",
+      "./package.json": "./package.json"
+    }
+  }
+}

@@ -26,7 +26,10 @@
     "dist"
   ],
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
