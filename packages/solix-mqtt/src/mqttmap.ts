@@ -386,6 +386,11 @@ const A17C5_0405: FieldMap = {
   b5: { name: 'min_soc' },
   b8: { name: 'usage_mode' },
   b9: { name: 'home_load_preset' },
+  // Individual MPPT channel power (4 channels on Solarbank 3)
+  c6: { name: 'pv_1_power' },
+  c7: { name: 'pv_2_power' },
+  c8: { name: 'pv_3_power' },
+  c9: { name: 'pv_4_power' },
   fe: TIMESTAMP_FE,
 };
 

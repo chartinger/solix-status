@@ -50,11 +50,11 @@ async function main(): Promise<void> {
         deviceSn: data.sn,
         batteryPercent: Number(data.decoded?.battery_soc),
         panelInputWatts: Number(data.decoded?.photovoltaic_power),
-        pvInput1Watts: null,
-        pvInput2Watts: null,
-        pvInput3Watts: null,
-        pvInput4Watts: null,
-        outputWatts: Number(data.decoded?.charged_energy), // Needs verification
+        pvInput1Watts: Number(data.decoded?.pv_1_power),
+        pvInput2Watts: Number(data.decoded?.pv_2_power),
+        pvInput3Watts: Number(data.decoded?.pv_3_power),
+        pvInput4Watts: Number(data.decoded?.pv_4_power),
+        outputWatts: Number(data.decoded?.output_power), // Needs verification
       };
       console.dir(deviceStatus, { depth: null });
       targetMqttClient.publish(TARGET_TOPIC_DATA, JSON.stringify(deviceStatus));
