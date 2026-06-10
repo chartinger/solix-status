@@ -52,6 +52,10 @@ export class AnkerSolixMqttClient extends EventEmitter<Events> {
   private mqttClient: ReturnType<typeof connect> | null = null;
   private devices: SiteDevice[] = [];
   private mqttInfo: MqttInfo | null = null;
+  private reconnectAttempts: number = 0;
+  private maxReconnectAttempts = 3;
+  private reconnectDelays = [1, 5, 10]; // In minutes
+  private reconnectTimer: NodeJS.Timeout | null = null;
 
   constructor(
     private apiClient: AnkerSolixClient,
@@ -241,6 +245,12 @@ export class AnkerSolixMqttClient extends EventEmitter<Events> {
     if (this.mqttClient) {
       throw new Error('Already connected.');
     }
+    // Cancel any pending reconnect timer
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.reconnectAttempts = 0; // Reset attempts on manual/successful connect
     process.stderr.write('Fetching MQTT credentials…\n');
     const [mqttInfo, devices] = await Promise.all([
       this.apiClient.getMqttInfo(),
@@ -272,6 +282,13 @@ export class AnkerSolixMqttClient extends EventEmitter<Events> {
 
     mqttClient.on('connect', () => {
       process.stderr.write('Connected.\n');
+
+      // Cancel any pending reconnect timer on successful connect
+      if (this.reconnectTimer) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
+      this.reconnectAttempts = 0;
 
       for (const device of devices) {
         const productCode = device.productCode || '+';
@@ -349,15 +366,19 @@ export class AnkerSolixMqttClient extends EventEmitter<Events> {
 
     mqttClient.on('error', (err: Error) => {
       process.stderr.write(`MQTT error: ${err.message}\n`);
+      this.handleReconnect();
     });
 
     mqttClient.on('disconnect', (packet?: unknown) => {
       process.stderr.write(`MQTT disconnect (from broker): ${JSON.stringify(packet)}\n`);
+      this.handleReconnect();
     });
 
     mqttClient.on('close', (err?: Error) => {
+      this.mqttClient = null;
       if (err) {
         process.stderr.write(`MQTT connection closed with error: ${err.message}\n`);
+        this.handleReconnect();
       } else {
         process.stderr.write('MQTT connection closed.\n');
       }
@@ -371,6 +392,29 @@ export class AnkerSolixMqttClient extends EventEmitter<Events> {
       process.stderr.write('MQTT trying to reconnect - skipping.\n');
       mqttClient.end();
     });
+  }
+
+  private async handleReconnect(): Promise<void> {
+    if (this.reconnectTimer) {
+      return;
+    }
+
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      const delayMinutes = this.reconnectDelays[this.reconnectAttempts];
+      this.reconnectAttempts++;
+      process.stderr.write(`Connection failed. Retrying in ${delayMinutes} minute(s) (Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})...\n`);
+
+      this.reconnectTimer = setTimeout(async () => {
+        this.reconnectTimer = null;
+        try {
+          await this.connect();
+        } catch (err) {
+          this.handleReconnect();
+        }
+      }, delayMinutes * 60 * 1000);
+    } else {
+      process.stderr.write('Max reconnection attempts reached. Stopping.\n');
+    }
   }
 
   public disconnect(): void {
