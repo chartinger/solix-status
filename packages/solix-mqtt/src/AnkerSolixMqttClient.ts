@@ -42,6 +42,7 @@ export interface MqttRawEvent {
 type Events = {
   message: [MqttMessageEvent];
   raw: [MqttRawEvent];
+  connected: [boolean];
 };
 
 export type AnkerSolixMqttClientOptions = {
@@ -52,6 +53,7 @@ export class AnkerSolixMqttClient extends EventEmitter<Events> {
   private mqttClient: ReturnType<typeof connect> | null = null;
   private devices: SiteDevice[] = [];
   private mqttInfo: MqttInfo | null = null;
+  private _connected = false;
   private reconnectAttempts: number = 0;
   private reconnectDelays = [1, 5, 10]; // In minutes (determines max attempts)
   private reconnectTimer: NodeJS.Timeout | null = null;
@@ -61,6 +63,11 @@ export class AnkerSolixMqttClient extends EventEmitter<Events> {
     private options: AnkerSolixMqttClientOptions = { raw: false },
   ) {
     super();
+  }
+
+  /** Returns whether the client is currently connected to the MQTT broker. */
+  public isConnected(): boolean {
+    return this._connected;
   }
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -266,6 +273,8 @@ export class AnkerSolixMqttClient extends EventEmitter<Events> {
 
     mqttClient.on('connect', () => {
       console.error('Connected.');
+      this._connected = true;
+      this.emit('connected', true);
 
       // Cancel any pending reconnect timer on successful connect
       if (this.reconnectTimer) {
@@ -360,6 +369,8 @@ export class AnkerSolixMqttClient extends EventEmitter<Events> {
 
     mqttClient.on('close', async (err?: Error) => {
       this.mqttClient = null;
+      this._connected = false;
+      this.emit('connected', false);
       if (err) {
         console.error(`MQTT connection closed with error:`, err.message);
         await this.handleReconnect();

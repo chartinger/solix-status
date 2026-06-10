@@ -4,6 +4,11 @@ import 'dotenv/config';
 import { connect } from 'mqtt';
 import { loadAuthInfo, saveAuthTokensToCache } from './auth.js';
 
+type MqttBridgeStatus = {
+  bridgeConnected: boolean;
+  solixMqttConnected: boolean | undefined;
+};
+
 async function main(): Promise<void> {
   const showRaw = process.argv.includes('--raw');
 
@@ -15,6 +20,7 @@ async function main(): Promise<void> {
   const TARGET_BROKER_HOST = process.env.TARGET_BROKER;
   const TARGET_TOPIC_DATA = process.env.TARGET_TOPIC_DATA;
   const TARGET_TOPIC_POLL = process.env.TARGET_TOPIC_POLL;
+  const TARGET_TOPIC_STATUS = process.env.TARGET_TOPIC_STATUS;
 
   if (!TARGET_BROKER_HOST || !TARGET_TOPIC_DATA || !TARGET_TOPIC_POLL) {
     throw new Error(
@@ -22,7 +28,13 @@ async function main(): Promise<void> {
     );
   }
 
-  const targetMqttClient = connect(`mqtt://${TARGET_BROKER_HOST}`, { manualConnect: true });
+  const willPayload = JSON.stringify({ bridgeConnected: false });
+  const targetMqttClient = connect(`mqtt://${TARGET_BROKER_HOST}`, {
+    manualConnect: true,
+    ...(TARGET_TOPIC_STATUS
+      ? { will: { topic: TARGET_TOPIC_STATUS, payload: willPayload, qos: 1, retain: true } }
+      : {}),
+  });
 
   const client = new AnkerSolixClient(apiClientOptions);
   const solixMqttClient = new AnkerSolixMqttClient(client, { raw: showRaw });
@@ -38,6 +50,10 @@ async function main(): Promise<void> {
       } else {
         console.log(`Subscribed to poll topic: ${TARGET_TOPIC_POLL}`);
       }
+    });
+    publishMqttBridgeStatus({
+      solixMqttConnected: solixMqttClient.isConnected(),
+      bridgeConnected: true,
     });
   });
 
@@ -101,6 +117,14 @@ async function main(): Promise<void> {
     }
   });
 
+  solixMqttClient.on('connected', (connected) => {
+    console.log(`Local MQTT client connected: ${connected}`);
+    publishMqttBridgeStatus({
+      solixMqttConnected: connected,
+      bridgeConnected: targetMqttClient.connected,
+    });
+  });
+
   await solixMqttClient.connect();
   targetMqttClient.connect();
 
@@ -112,6 +136,11 @@ async function main(): Promise<void> {
 
   process.on('SIGINT', () => exit(0));
   process.on('SIGTERM', () => exit(0));
+
+  function publishMqttBridgeStatus(status: MqttBridgeStatus): void {
+    if (!TARGET_TOPIC_STATUS) return;
+    targetMqttClient.publish(TARGET_TOPIC_STATUS, JSON.stringify(status), { retain: true });
+  }
 }
 
 main().catch((error: unknown) => {
